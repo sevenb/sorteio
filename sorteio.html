@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio dos Números dos Apartamentos - Edifício Comandante Mendes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            padding: 0;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-top: 20px;
+        }
+        h4 {
+            color: #555;
+            margin-bottom: 20px;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+            max-width: 600px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        th, td {
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .circular-timer {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: conic-gradient(green 0deg, green 0deg, white 0deg 360deg);
+            position: relative;
+        }
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .sorteado {
+            font-size: 24px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <h1>Sorteio dos Números dos Apartamentos - Edifício Comandante Mendes</h1>
+    <h4>Cada participante receberá um número de apartamento atribuído aleatoriamente.<br>Clique em "Sortear" para iniciar o sorteio.</h4>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Apartamento Sorteado</th>
+                <th>Timer</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="sorteio-tabela">
+            <!-- Resultados serão exibidos aqui -->
+        </tbody>
+    </table>
+
+    <script>
+       // Lista de participantes com apartamentos predefinidos (se houver)
+        const participantes = [
+            { nome: 'Eliane', apto: null },
+            { nome: 'Lucia', apto: 105 },   // Apartamento fixo
+            { nome: 'Eduardo', apto: null },
+            { nome: 'Luiza', apto: 204 },   // Apartamento fixo
+            { nome: 'Luiz', apto: null },
+            { nome: 'Katia', apto: null },
+            { nome: 'Alexandre', apto: null }
+        ];
+
+        // Lista de apartamentos disponíveis para sorteio
+        let aptosDisponiveis = [605, 504, 405, 305, 304];
+
+        /**
+        * Função para realizar o sorteio dos apartamentos para os participantes
+        */
+        function sortearAptos() {
+            participantes.forEach(participante => {
+                // Verifica se o participante já tem apartamento fixo
+                if (participante.apto !== null) return;
+
+                // Sorteia um apartamento aleatoriamente
+                const aptoSorteado = aptosDisponiveis[Math.floor(Math.random() * aptosDisponiveis.length)];
+
+                // Remove o apartamento sorteado da lista de disponíveis
+                if (aptoSorteado) {
+                    aptosDisponiveis = aptosDisponiveis.filter(apto => apto !== aptoSorteado);
+                    participante.apto = aptoSorteado;
+                }
+            });
+        }
+
+        function iniciarSorteio(indice) {
+            const linha = document.getElementById('linha-' + indice);
+            const aptoCell = linha.querySelector('.apto');
+            const timerElement = linha.querySelector('.circular-timer');
+            const timerText = linha.querySelector('.timer-text');
+            const button = linha.querySelector('.sortear-btn');
+            let tempoRestante = 4;
+            let currentAngle = 0;
+
+            button.disabled = true;
+
+            const timerInterval = setInterval(() => {
+                tempoRestante--;
+                currentAngle += 90;
+
+                timerElement.style.background = `conic-gradient(green ${currentAngle}deg, white ${currentAngle}deg 360deg)`;
+                timerText.textContent = tempoRestante + 1;
+
+                if (tempoRestante < 0) {
+                    clearInterval(timerInterval);
+
+                    aptoCell.textContent = participantes[indice].apto;
+                    aptoCell.classList.add('sorteado');
+                    timerText.textContent = '0';
+
+                    // Confetti animation when the number is revealed
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }, 1000);
+        }
+
+        function exibirParticipantes() {
+            const tabela = document.getElementById('sorteio-tabela');
+
+            participantes.forEach((participante, indice) => {
+                const linha = document.createElement('tr');
+                linha.id = 'linha-' + indice;
+
+                const nomeCell = document.createElement('td');
+                const aptoCell = document.createElement('td');
+                aptoCell.className = 'apto';
+
+                const timerCell = document.createElement('td');
+                const timerDiv = document.createElement('div');
+                const timerText = document.createElement('div');
+                timerDiv.className = 'circular-timer';
+                timerText.className = 'timer-text';
+                timerText.textContent = '---';
+                timerDiv.appendChild(timerText);
+                timerCell.appendChild(timerDiv);
+
+                const actionCell = document.createElement('td');
+                const button = document.createElement('button');
+                button.textContent = 'Sortear';
+                button.className = 'sortear-btn';
+                button.addEventListener('click', () => iniciarSorteio(indice));
+                actionCell.appendChild(button);
+
+                nomeCell.textContent = participante.nome;
+                aptoCell.textContent = '---';
+
+                linha.appendChild(nomeCell);
+                linha.appendChild(aptoCell);
+                linha.appendChild(timerCell);
+                linha.appendChild(actionCell);
+                tabela.appendChild(linha);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            exibirParticipantes();
+            sortearAptos();
+        });
+    </script>
+</body>
+</html>
